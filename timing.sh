@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# grep search term must be manually set
-search_term="mail"
-
 function run_loop {
     run_idx=0
     for i in "${request_list[@]}"
@@ -10,10 +7,11 @@ function run_loop {
         printf "Running: ${i}\n"
         # execute run_test.sh and pass command line arguments to it
         # commands with & at the end are given a separate subprocess to run in
-        ./run_test.sh "${i}" "${search_term}" "${log_list[$run_idx]}" &
+        ./run_test.sh "${i}" "${search_term}" "${path_list[$run_idx]}" "${run_idx}" &
         run_idx=$((run_idx+1))
     done
     
+    # wait for subprocesses to finish before exiting
     wait
 }
 
@@ -35,18 +33,22 @@ function main {
         if [ "${choice}" == "y" -o "${choice}" == "Y" ]
         then
             # request_list array passed individually to ./run_test.sh
-            request_list[$idx]="curl -i --header \"X-Forwarded-For: ${ip}\" \"${i}\" > ${i}.log"
+            request_list[$idx]="curl -# -i --header \"X-Forwarded-For: ${ip}\" \"${i}\" > ${idx}.log"
         else
-            request_list[$idx]="curl -i \"${i}\" > ${i}.log"
+            request_list[$idx]="curl -# -i \"${i}\" > ${idx}.log"
         fi
         
         # list of log paths needed for grep in ./run_test.sh
-        log_list[$idx]="${i}.log"
         idx=$((idx+1))
     done
     
     echo "${result_list[@]}" 
     run_loop
+}
+
+function get_search_term {
+    printf "Enter a term to search for with grep on the websites: "
+    read search_term
 }
 
 function get_sites_from_file {
@@ -69,4 +71,10 @@ function get_sites_from_file {
 }
 
 get_sites_from_file
+
+if [ -z "$1" ]
+then
+    get_search_term
+fi
+
 main
