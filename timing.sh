@@ -1,10 +1,19 @@
 #!/bin/bash
-log="request.log"
 search_term=""
 
+function run_loop {
+    run_idx=0
+    for i in "${request_list[@]}"
+    do
+        printf "Running: ${i}\n"
+        #./run_test.sh "${i}" "${search_term}" "${log_list[$run_idx]}"
+        run_idx=$((run_idx+1))
+    done
+    
+    wait
+}
+
 function main {
-    printf "Enter an url to visit: "
-    read url
 
     printf "Do you want to use a different geolocation? (y/n): "
     read choice
@@ -13,30 +22,45 @@ function main {
     then
         printf "Enter a different IP address to use: "
         read ip
-        request="curl -i --header \"X-Forwarded-For: ${ip}\" \"${url}\" > ${log}"
-        printf "\n${request}\n\n"
-    else
-        request="curl -i \"${url}\" > ${log}"
-        printf "\n${request}\n\n"
     fi
-    
-    count=0
-    while true
-    do
-        result=`eval $request`
         
-        grep_cmd=$(grep "${search_term}" ${log})
-
-        if [ "$grep_cmd" != "" ]
+    idx=0
+    for i in "${path_list[@]}"
+    do
+        if [ "${choice}" == "y" -o "${choice}" == "Y" ]
         then
-            break;
+            request_list[$idx]="curl -i --header \"X-Forwarded-For: ${ip}\" \"${i}\" > ${i}.log &"
+        else
+            request_list[$idx]="curl -i \"${i}\" > ${i}.log &"
         fi
+        log_list[$idx]="${i}.log"
 
-        count=$((count++))
-        sleep 15s
+        #printf "\n${request_list[$idx]}\n\n"
+        idx=$((idx+1))
     done
-
-    printf "\nTook $((($count+1) * 15)) seconds to deploy.\n"
+    echo "${result_list[@]}" 
+    run_loop
 }
 
+function get_sites_from_file {
+    if [ "$1" == "" ]
+    then
+        printf "Enter a file path to read urls from: "
+        read path
+    else
+        path=$1
+    fi
+
+    array_idx=0
+    while read -r line
+    do
+        path_list[$array_idx]=$line
+        printf "Index: ${array_idx}, line: ${line}\n"
+        array_idx=$((array_idx+1))
+    done < "$path"
+    
+    echo "${path_list[@]}"
+}
+
+get_sites_from_file
 main
