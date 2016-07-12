@@ -6,11 +6,8 @@ url=$3
 SEARCH_LOGFILE="${4}.log"
 DEPLOY_LOGFILE="deploy_results.log"
 
-# predefined bash constant that increments each second
-SECONDS=0
-
-printf "${url} started checking publish status at $(date +"%T")\n" >> ${DEPLOY_LOGFILE}
-
+printf "${url} started checking deploy at $(date +"%T")\n" >> ${DEPLOY_LOGFILE}
+count=0
 while true
 do
     # executes the request
@@ -26,11 +23,12 @@ do
         break;
     fi
 
-    sleep 10s
+    count=$((count++))
+    sleep 15s
 done
 
 # clean up
-#`rm "${SEARCH_LOGFILE}"`
+`rm "${SEARCH_LOGFILE}"`
 
-printf "${url} ended checking publish status at $(date +"%T")\n" >> ${DEPLOY_LOGFILE}
-printf "${url} took ${SECONDS} seconds to publish\n" >> ${DEPLOY_LOGFILE}
+printf "${url} ended checking deploy at $(date +"%T")\n" >> ${DEPLOY_LOGFILE}
+printf "${url} took $((($count+1) * 15)) seconds to deploy.\n" >> ${DEPLOY_LOGFILE}

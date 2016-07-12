@@ -1,14 +1,6 @@
 #!/bin/bash
 
-DEPLOY_LOGFILE="deploy_results.log"
-
 function run_loop {
-   
-    # initialize and set the log file for results 
-    printf "\n-------------------\n" >> ${DEPLOY_LOGFILE}
-    printf "Publish test starting at $(date +"%T")" >> ${DEPLOY_LOGFILE}
-    printf "\n-------------------\n" >> ${DEPLOY_LOGFILE}
-
     run_idx=0
     for i in "${request_list[@]}"
     do
@@ -18,14 +10,9 @@ function run_loop {
         ./run_test.sh "${i}" "${search_term}" "${path_list[$run_idx]}" "${run_idx}" &
         run_idx=$((run_idx+1))
     done
-   
-    # kill all subprocesses if SIGINT is given
-    # so they don't have to be manually killed 
-    trap handle_sigint SIGINT
-
+    
     # wait for subprocesses to finish before exiting
     wait
-    printf "done...\n"
 }
 
 function main {
@@ -83,21 +70,11 @@ function get_sites_from_file {
     echo "${path_list[@]}"
 }
 
-function handle_sigint {
-    for proc in `jobs -p`
-    do
-        kill $proc
-    done
-}
-
 get_sites_from_file
 
-#if [ -z "$1" ]
-#then
-    #get_search_term
-#fi
-
-search_term="bazinga123"
-#search_term="sdfljasdjadjgkadgksdk"
+if [ -z "$1" ]
+then
+    get_search_term
+fi
 
 main
